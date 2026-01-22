@@ -7,15 +7,30 @@ interface Props {
   onDelete: (id: number) => void;
   filterType?: string;
   filterDate?: string;
+  filterStatus?: string;
 }
 
-const StockTable: React.FC<Props> = ({ items, onEdit, onDelete, filterType, filterDate }) => {
+const statusBadgeClass = (status: StockItem['status']) => {
+  switch (status) {
+    case 'NEW':
+      return 'bg-green-100 text-green-800 border border-green-200';
+    case 'RETURN':
+      return 'bg-blue-100 text-blue-800 border border-blue-200';
+    case 'DAMAGE':
+      return 'bg-red-100 text-red-800 border border-red-200';
+    default:
+      return 'bg-gray-100 text-gray-800 border border-gray-200';
+  }
+};
+
+const StockTable: React.FC<Props> = ({ items, onEdit, onDelete, filterType, filterDate, filterStatus }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 5;
   const filteredItems = items.filter((item) => {
     const matchesType = !filterType || filterType === 'All' || item.type.toLowerCase() === filterType.toLowerCase();
     const matchesDate = !filterDate || new Date(item.date).toISOString().split('T')[0] === filterDate;
-    return matchesType && matchesDate;
+    const matchesStatus = !filterStatus || filterStatus === 'All' || item.status === filterStatus;
+    return matchesType && matchesDate && matchesStatus;
   });
   const totalPages = Math.ceil(filteredItems.length / rowsPerPage);
   const paginatedItems = filteredItems.slice(
@@ -71,11 +86,7 @@ const StockTable: React.FC<Props> = ({ items, onEdit, onDelete, filterType, filt
                     <span className="text-sm font-medium text-gray-900">{item.totalQuantity}</span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${
-                      item.status === 'NEW'
-                        ? 'bg-green-100 text-green-800 border border-green-200'
-                        : 'bg-red-100 text-red-800 border border-red-200'
-                    }`}>
+                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${statusBadgeClass(item.status)}`}>
                       {item.status.split('_').map(word => word.charAt(0) + word.slice(1).toLowerCase()).join(' ')}
                     </span>
                   </td>
@@ -131,13 +142,9 @@ const StockTable: React.FC<Props> = ({ items, onEdit, onDelete, filterType, filt
                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                     {item.type}
                   </span>
-                  <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${
-                    item.status === 'NEW'
-                      ? 'bg-green-100 text-green-800 border border-green-200'
-                      : 'bg-red-100 text-red-800 border border-red-200'
-                  }`}>
-                    {item.status.split('_').map(word => word.charAt(0) + word.slice(1).toLowerCase()).join(' ')}
-                  </span>
+                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${statusBadgeClass(item.status)}`}>
+                      {item.status.split('_').map(word => word.charAt(0) + word.slice(1).toLowerCase()).join(' ')}
+                    </span>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4 text-sm">
