@@ -39,13 +39,25 @@ class UserService {
 
   async updateUser(id: string, userData: Partial<User>): Promise<User> {
     try {
-      const response = await apiClient.put(`/user/update/${id}`, {
+      const payload: any = {
         name: userData.name,
         email: userData.email,
         telephone: userData.contact,
         role: userData.role,
         type: 'USER',
-      });
+      };
+      
+      // Add status if provided
+      if (userData.status !== undefined) {
+        payload.status = userData.status;
+      }
+      
+      // Add password if provided (for password reset)
+      if (userData.password !== undefined && userData.password !== null) {
+        payload.password = userData.password;
+      }
+      
+      const response = await apiClient.put(`/user/update/${id}`, payload);
       const updatedUser = response.data as UserApiDto;
       return {
         id: updatedUser.id.toString(),
