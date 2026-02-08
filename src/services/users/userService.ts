@@ -12,6 +12,7 @@ export type User = {
   status: 'active' | 'inactive' | 'pending';
   password: string; // frontend stores password when creating a user
   productId: number; // required per request
+  serialPrefix?: string;
 };
 
 class UserService {
@@ -30,6 +31,7 @@ class UserService {
         status: (u.status?.toLowerCase() as 'active' | 'inactive' | 'pending') || 'pending',
         password: '',
         productId: 0,
+        serialPrefix: u.serialPrefix,
       }));
     } catch (err) {
       console.error('userService.getAllUsers failed:', err);
@@ -45,6 +47,7 @@ class UserService {
         telephone: userData.contact,
         role: userData.role,
         type: 'USER',
+        serialPrefix: userData.serialPrefix,
       };
       
       // Add status if provided
@@ -71,6 +74,7 @@ class UserService {
           (updatedUser.status?.toLowerCase() as 'active' | 'inactive' | 'pending') || 'pending',
         password: '',
         productId: 0,
+        serialPrefix: updatedUser.serialPrefix,
       };
     } catch (err) {
       console.error('userService.updateUser failed:', err);
@@ -101,6 +105,7 @@ class UserService {
         status: userData.status,
         type: userData.role.toUpperCase(),
         productId: userData.productId,
+        serialPrefix: userData.serialPrefix,
       };
 
       const resp = await apiClient.post<UserApiDto>('/user/create', payload);
@@ -116,6 +121,7 @@ class UserService {
         status: (created.status?.toLowerCase() as 'active' | 'inactive' | 'pending') || 'pending',
         password: '',
         productId: userData.productId,
+        serialPrefix: created.serialPrefix,
       };
     } catch (err) {
       console.error('userService.createUser failed:', err);

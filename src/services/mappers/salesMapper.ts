@@ -63,6 +63,13 @@ export function mapOrderDtoToSale(order: unknown): FrontSale {
     ord['totalPrice'] ?? ord['totalAmount'] ?? items.reduce((s, i) => s + i.total, 0)
   );
 
+  const orderDateValue =
+    ord['orderDate'] ??
+    ord['createdDate'] ??
+    ord['date'] ??
+    customer['createdDate'] ??
+    customer['orderDate'];
+
   return {
     id: toStringId(ord['orderId'] ?? ord['id'] ?? ord['customerId'] ?? ''),
     customerId: ord['customerId'] ? toStringId(ord['customerId']) : undefined,
@@ -76,6 +83,7 @@ export function mapOrderDtoToSale(order: unknown): FrontSale {
     remark: String(customer['remark'] ?? ord['remark'] ?? ''),
     items,
     totalPrice,
+    date: orderDateValue ? String(orderDateValue) : undefined,
   };
 }
 

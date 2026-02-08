@@ -27,6 +27,7 @@ export interface Sale {
   // canonical sale total
   totalPrice: number;
   serialNo?: string;
+  date?: string; 
 }
 
 export default Sale;
