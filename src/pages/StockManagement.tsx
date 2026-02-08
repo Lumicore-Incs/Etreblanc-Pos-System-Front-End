@@ -168,6 +168,19 @@ export const StockManagement = () => {
             <p className="text-sm text-red-500">Total damaged records</p>
             <p className="text-3xl font-semibold text-red-700">{damageItems.length}</p>
             <p className="text-sm text-red-600">Quantity affected: {totalDamaged}</p>
+            
+            {/* Detailed breakdown of damaged products */}
+            <div className="mt-4 space-y-2">
+              <p className="text-xs font-medium text-red-600 uppercase tracking-wide">Product Details:</p>
+              <div className="max-h-32 overflow-y-auto space-y-1">
+                {damageItems.map((item, index) => (
+                  <div key={item.stock_id || index} className="flex justify-between items-center text-sm bg-white/50 rounded px-2 py-1">
+                    <span className="font-medium text-gray-800 truncate mr-2">{item.type}</span>
+                    <span className="text-red-600 font-semibold">Qty: {Math.abs(item.quantity)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
           <div className="bg-white bg-opacity-80 border border-dashed border-red-200 rounded-xl p-4 text-sm text-gray-600">
             Every damage entry keeps stock history clean and can be filtered via the status selector below.

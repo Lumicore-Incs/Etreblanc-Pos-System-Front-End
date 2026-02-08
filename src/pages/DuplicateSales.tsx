@@ -122,8 +122,21 @@ export const DuplicateSales: React.FC = () => {
   };
 
   return (
-    <div className="w-full px-4 relative overflow-hidden">
-      <BackgroundIcons />
+    <div
+  className="
+    w-full
+    max-w-full
+    sm:max-w-full
+    md:max-w-7xl
+    lg:max-w-screen-2xl
+    mx-auto
+    px-3
+    sm:px-4
+    md:px-6
+    relative
+    overflow-x-hidden
+  "
+>       <BackgroundIcons />
 
       <AlertSnackbar
         message={snackbar.message}
@@ -132,32 +145,32 @@ export const DuplicateSales: React.FC = () => {
         onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
       />
 
-      <header className="mb-8">
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-800">Resolve Duplicate Orders</h1>
-            <p className="text-gray-600 mt-2">Add, edit, and manage your sales entries</p>
+      <header className="mb-6 sm:mb-8">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div className="w-full sm:w-auto">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">Resolve Duplicate Orders</h1>
+            <p className="text-gray-600 mt-1 sm:mt-2 text-sm sm:text-base">Add, edit, and manage your sales entries</p>
           </div>
 
           <button
             onClick={loadOrders}
             disabled={isLoading}
-            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-400"
+            className="px-3 sm:px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-400 text-sm sm:text-base transition-colors"
           >
-            Refresh
+            {isLoading ? 'Refreshing...' : 'Refresh'}
           </button>
         </div>
 
-        {/* ✅ Export Button Only */}
+        {/* Export Button Only */}
         {user?.role === 'SUPER USER' && (
-          <div className="mt-4 flex justify-end">
+          <div className="mt-4 flex justify-end w-full sm:w-auto">
             <button
               onClick={handleExportExcel}
               disabled={isExporting}
-              className="flex items-center gap-2 px-5 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:bg-purple-400"
+              className="flex items-center justify-center gap-1 sm:gap-2 px-3 sm:px-5 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:bg-purple-400 text-sm sm:text-base transition-colors w-full sm:w-auto"
             >
-              <DownloadIcon className="w-5 h-5" />
-              {isExporting ? 'Exporting...' : 'Export to Excel'}
+              <DownloadIcon className="w-4 h-4 sm:w-5 sm:h-5" />
+              <span>{isExporting ? 'Exporting...' : 'Export'}</span>
             </button>
           </div>
         )}

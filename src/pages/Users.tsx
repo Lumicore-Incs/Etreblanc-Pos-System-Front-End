@@ -26,7 +26,6 @@ import { BackgroundIcons } from '../components/BackgroundIcons';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { InputField } from '../components/InputField';
 import { productApi } from '../services/api';
-import type { User as ServiceUser } from '../services/users/userService';
 import { userService } from '../services/users/userService';
 
 type User = ServiceUser & { productName?: string };
@@ -328,6 +327,7 @@ export const Users = () => {
     productId: 0,
     productName: '',
     password: '',
+    serialPrefix: '',
   });
 
   // Filter users based on search term
@@ -337,7 +337,8 @@ export const Users = () => {
       user.name.toLowerCase().includes(searchTermLower) ||
       user.email.toLowerCase().includes(searchTermLower) ||
       user.role.toLowerCase().includes(searchTermLower) ||
-      user.contact.toLowerCase().includes(searchTermLower)
+      user.contact.toLowerCase().includes(searchTermLower) ||
+      (user.serialPrefix || '').toLowerCase().includes(searchTermLower)
     );
   });
 
@@ -398,6 +399,7 @@ export const Users = () => {
           contact: editingUser.contact,
           role: editingUser.role,
           status: editingUser.status,
+          serialPrefix: editingUser.serialPrefix,
           password: null as any, // Don't update password when editing user
         });
 
@@ -406,8 +408,6 @@ export const Users = () => {
             user.id === updatedUser.id
               ? {
                 ...updatedUser,
-                productId: editingUser.productId,
-                productName: editingUser.productName,
               }
               : user
           )
@@ -482,6 +482,7 @@ export const Users = () => {
         productId: 0,
         productName: '',
         password: '',
+        serialPrefix: '',
       });
       setShowAddForm(false);
     }
@@ -621,30 +622,13 @@ export const Users = () => {
               <option value="active">Active</option>
               <option value="inactive">Inactive</option>
             </select>
-            <div>
-              <select
-                id="product"
-                value={newUser.productId || ''}
-                onChange={(e) => {
-                  const selectedProduct = products.find(
-                    (p) => p.productId === Number(e.target.value)
-                  );
-                  setNewUser({
-                    ...newUser,
-                    productId: Number(e.target.value),
-                    productName: selectedProduct?.name,
-                  });
-                }}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300"
-              >
-                <option value="">Select a product</option>
-                {products.map((product) => (
-                  <option key={product.productId} value={product.productId}>
-                    {product.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <input
+              type="text"
+              placeholder="Serial Prefix"
+              value={newUser.serialPrefix || ''}
+              onChange={(e) => setNewUser({ ...newUser, serialPrefix: e.target.value })}
+              className="px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300"
+            />
             <InputField
               id="password"
               type="password"
@@ -668,8 +652,7 @@ export const Users = () => {
                   role: 'User',
                   type: '',
                   status: 'pending',
-                  productId: firstProduct ? firstProduct.productId : 0,
-                  productName: firstProduct ? firstProduct.name : '',
+                  serialPrefix: 'SAMPLE',
                 }));
               }}
               disabled={isLoading}
@@ -731,16 +714,13 @@ export const Users = () => {
                 <th className="w-[10%] px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Status
                 </th>
+                <th className="w-[8%] px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Serial Prefix
+                </th>
                 <th className="w-[12%] px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   <div className="flex items-center gap-2">
                     <Calendar className="w-4 h-4" />
                     Date
-                  </div>
-                </th>
-                <th className="w-[15%] px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  <div className="flex items-center gap-2">
-                    <Package className="w-4 h-4" />
-                    Product
                   </div>
                 </th>
                 <th className="w-[11%] px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -832,38 +812,23 @@ export const Users = () => {
                       )}
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">
+                      {editingUser?.id === user.id ? (
+                        <input
+                          type="text"
+                          value={editingUser.serialPrefix || ''}
+                          onChange={(e) =>
+                            setEditingUser({ ...editingUser, serialPrefix: e.target.value })
+                          }
+                          className="w-full px-2 py-1 border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
+                        />
+                      ) : (
+                        <div className="text-sm text-gray-500 truncate">{user.serialPrefix || '-'}</div>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap">
                       <div className="text-sm text-gray-500">
                         {new Date(user.registration_date).toLocaleDateString()}
                       </div>
-                    </td>
-                    <td className="px-4 py-3 whitespace-nowrap">
-                      {editingUser?.id === user.id ? (
-                        <select
-                          value={editingUser.productId || ''}
-                          onChange={(e) => {
-                            const selectedProduct = products.find(
-                              (p) => p.productId === Number(e.target.value)
-                            );
-                            setEditingUser({
-                              ...editingUser,
-                              productId: Number(e.target.value),
-                              productName: selectedProduct?.name,
-                            });
-                          }}
-                          className="w-full px-2 py-1 border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
-                        >
-                          <option value="">Select a product</option>
-                          {products.map((product) => (
-                            <option key={product.productId} value={product.productId}>
-                              {product.name}
-                            </option>
-                          ))}
-                        </select>
-                      ) : (
-                        <div className="text-sm text-gray-500 truncate">
-                          {user.productName || 'No product assigned'}
-                        </div>
-                      )}
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
                       {editingUser?.id === user.id ? (
@@ -1078,6 +1043,26 @@ export const Users = () => {
                   </div>
                 </div>
 
+                {/* Serial Prefix */}
+                <div className="flex items-start gap-3">
+                  <Package className="w-5 h-5 text-gray-400 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-gray-500 uppercase tracking-wider">Serial Prefix</p>
+                    {editingUser?.id === user.id ? (
+                      <input
+                        type="text"
+                        value={editingUser.serialPrefix || ''}
+                        onChange={(e) =>
+                          setEditingUser({ ...editingUser, serialPrefix: e.target.value })
+                        }
+                        className="w-full px-2 py-1 border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-blue-300 text-sm text-gray-700"
+                      />
+                    ) : (
+                      <p className="text-sm text-gray-700">{user.serialPrefix || '-'}</p>
+                    )}
+                  </div>
+                </div>
+
                 {/* Date */}
                 <div className="flex items-start gap-3">
                   <Calendar className="w-5 h-5 text-gray-400 flex-shrink-0 mt-0.5" />
@@ -1086,41 +1071,6 @@ export const Users = () => {
                     <p className="text-sm text-gray-700">
                       {new Date(user.registration_date).toLocaleDateString()}
                     </p>
-                  </div>
-                </div>
-
-                {/* Product */}
-                <div className="flex items-start gap-3">
-                  <Package className="w-5 h-5 text-gray-400 flex-shrink-0 mt-0.5" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs text-gray-500 uppercase tracking-wider">Product</p>
-                    {editingUser?.id === user.id ? (
-                      <select
-                        value={editingUser.productId || ''}
-                        onChange={(e) => {
-                          const selectedProduct = products.find(
-                            (p) => p.productId === Number(e.target.value)
-                          );
-                          setEditingUser({
-                            ...editingUser,
-                            productId: Number(e.target.value),
-                            productName: selectedProduct?.name,
-                          });
-                        }}
-                        className="w-full px-2 py-1 border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-blue-300 text-sm"
-                      >
-                        <option value="">Select a product</option>
-                        {products.map((product) => (
-                          <option key={product.productId} value={product.productId}>
-                            {product.name}
-                          </option>
-                        ))}
-                      </select>
-                    ) : (
-                      <p className="text-sm text-gray-700 truncate">
-                        {user.productName || 'No product assigned'}
-                      </p>
-                    )}
                   </div>
                 </div>
               </div>

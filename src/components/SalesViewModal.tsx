@@ -33,6 +33,10 @@ export const SalesViewModal: React.FC<SalesViewModalProps> = ({ sale, onClose })
   if (!sale) return null;
 
   const getTotalAmount = (sale: Sale) => {
+    // Use the saved totalPrice if available, otherwise calculate from items
+    if (sale.totalPrice !== undefined && sale.totalPrice !== null) {
+      return sale.totalPrice;
+    }
     return sale.items ? sale.items.reduce((sum, item) => sum + item.qty * item.price, 0) : 0;
   };
 
