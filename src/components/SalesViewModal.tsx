@@ -76,7 +76,7 @@ export const SalesViewModal: React.FC<SalesViewModalProps> = ({ sale, onClose })
           <div className="bg-white/50 backdrop-blur-sm rounded-xl p-6 shadow-sm border border-blue-50">
             <div className="flex justify-between items-start">
               <div>
-                <h3 className="text-xl font-bold text-gray-900 tracking-tight">{sale.name}</h3>
+                <h3 className="text-xl font-bold text-gray-900 tracking-tight">{sale.customerName}</h3>
                 <p className="text-sm text-gray-500 mt-1">Serial No: {sale.serialNo}</p>
               </div>
               <span

@@ -376,7 +376,7 @@ export const SalesTable: React.FC<SalesTableProps> = ({
                     className="py-4 whitespace-nowrap"
                     style={widthStyle('customer')}
                   >
-                    <div className="font-medium text-gray-900">{sale.name}</div>
+                    <div className="font-medium text-gray-900">{sale.customerName}</div>
                   </td>
                   <td
                     className="px-6 py-4 whitespace-nowrap text-sm text-gray-600"
