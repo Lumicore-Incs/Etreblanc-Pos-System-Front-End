@@ -20,6 +20,7 @@ export const SalesForm: React.FC<SalesFormProps> = ({
   onCancelEdit,
 }) => {
   const [formData, setFormData] = useState({
+    customerName: '',
     name: '',
     customerId: '',
     address: '',
@@ -89,6 +90,7 @@ export const SalesForm: React.FC<SalesFormProps> = ({
     if (currentSale && isEditing) {
       setFormData({
         name: currentSale.name,
+        customerName: currentSale.customerName,
         customerId: currentSale.customerId ?? '',
         address: currentSale.address,
         contact01: currentSale.contact01 ? 0 + currentSale.contact01 : '',
@@ -216,6 +218,7 @@ export const SalesForm: React.FC<SalesFormProps> = ({
     setFormData((prev) => ({
       ...prev, // keep everything else SAME
       name: name || prev.name,
+      customerName: name || prev.customerName,
       address: address || prev.address,
       contact01: contact01 || prev.contact01,
       contact02: contact02 || prev.contact02,
@@ -254,7 +257,7 @@ export const SalesForm: React.FC<SalesFormProps> = ({
       
       const results = customers.filter(
         (c) =>
-          (c.name && c.name.toLowerCase().includes(lowerQuery)) ||
+          (c.customerName && c.customerName.toLowerCase().includes(lowerQuery)) ||
           (c.contact01 && c.contact01.includes(query)) ||
           (c.contact02 && c.contact02.includes(query))
       );
@@ -271,7 +274,7 @@ export const SalesForm: React.FC<SalesFormProps> = ({
   const handleSelectCustomerFromSearch = (customer: CustomerDtoGet) => {
     setFormData((prev) => ({
       ...prev,
-      name: customer.name || prev.name,
+      name: customer.customerName || prev.customerName,
       address: customer.address || prev.address,
       contact01: ensureLeadingZero(customer.contact01) || prev.contact01,
       contact02: ensureLeadingZero(customer.contact02) || prev.contact02,
@@ -302,10 +305,19 @@ export const SalesForm: React.FC<SalesFormProps> = ({
       handleSearchCustomer(value);
     }
 
-    setFormData({
-      ...formData,
-      [name]: value,
-    });
+    // Keep name and customerName in sync
+    if (name === 'name') {
+      setFormData((prev) => ({
+        ...prev,
+        name: value,
+        customerName: value,
+      }));
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
   };
 
   // Normalize phone comparison by removing an optional leading 0 from user input
@@ -332,7 +344,7 @@ export const SalesForm: React.FC<SalesFormProps> = ({
     try {
       setIsLookingUpCustomer(true);
       const customers = await ensureCustomersLoaded();
-      const nameTrimmed = (formData.name || '').trim().toLowerCase();
+      const nameTrimmed = (formData.customerName || '').trim().toLowerCase();
       const c1 = normalizePhoneForCompare(formData.contact01 || '');
       const c2 = normalizePhoneForCompare(formData.contact02 || '');
 
@@ -356,6 +368,7 @@ export const SalesForm: React.FC<SalesFormProps> = ({
         setFormData((prev) => ({
           ...prev,
           name: matched.name || prev.name,
+          customerName: matched.name || prev.customerName,
           address: matched.address || prev.address,
           contact01: ensureLeadingZero(matched.contact01) || prev.contact01,
           contact02: ensureLeadingZero(matched.contact02) || prev.contact02,
@@ -625,12 +638,15 @@ export const SalesForm: React.FC<SalesFormProps> = ({
         })
         .filter((shortName) => shortName !== '')
         .join(' ');
+
+        const customerNameForBackend = formData.name;
       
       const customerNameWithProducts = productShortNames 
         ? `${formData.name}(${productShortNames})`
         : formData.name;
 
       const customerData: CustomerRequestDTO = {
+        customerName:customerNameForBackend,
         name: customerNameWithProducts,
         address: formData.address,
         contact01: contact01ForBackend,
@@ -694,6 +710,7 @@ export const SalesForm: React.FC<SalesFormProps> = ({
   const resetForm = () => {
     setFormData({
       name: '',
+      customerName: '',
       customerId: '',
       address: '',
       contact01: '',
@@ -732,6 +749,7 @@ export const SalesForm: React.FC<SalesFormProps> = ({
 
     setFormData({
       name: 'John Doe',
+      customerName: 'John Doe',
       customerId: '',
       address: '123 Sample Street',
       contact01: '0771234563',
@@ -901,7 +919,7 @@ export const SalesForm: React.FC<SalesFormProps> = ({
                     name="name"
                     type="text"
                     required
-                    value={formData.name}
+                    value={formData.customerName}
                     onChange={handleChange}
                     onBlur={lookupAndPrefillCustomer}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-base"
