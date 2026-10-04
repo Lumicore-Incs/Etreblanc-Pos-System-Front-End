@@ -1,0 +1,145 @@
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  Legend
+} from 'recharts';
+
+const CustomLegend = (props: any) => {
+  const { payload } = props;
+  return (
+    <div className="flex gap-4 items-center justify-end text-sm text-gray-500 absolute top-[-30px] right-0 flex-wrap">
+      {payload.map((entry: any, index: number) => (
+        <div key={`item-${index}`} className="flex items-center gap-1.5">
+          <div
+            className="w-2.5 h-2.5 rounded-full"
+            style={{ backgroundColor: entry.color }}
+          />
+          <span className="text-xs font-medium uppercase text-gray-600">{entry.value}</span>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+const CHART_COLORS = [
+  '#0d9488', // teal
+  '#ea580c', // orange
+  '#3977a8', // blue
+  '#9333ea', // purple
+  '#db2777', // pink
+  '#059669', // emerald
+  '#d97706', // amber
+  '#dc2626', // red
+  '#2563eb', // blue
+  '#4f46e5', // indigo
+];
+
+export const DashboardCharts = ({ data }: { data?: any }) => {
+  const revenueData = data?.revenueData || [{ name: 'No Data', value: 0 }];
+  const sellingData = data?.sellingData || [];
+  const customers = data?.customers || [];
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-5 sm:mb-7">
+      {/* Selling Chart */}
+      <div
+        className="rounded-2xl sm:rounded-3xl p-4 sm:p-6"
+        style={{
+          background: 'rgba(255,255,255,0.7)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+          border: '1px solid rgba(255,255,255,0.9)',
+          boxShadow: '0 8px 40px rgba(0,0,0,0.06)',
+        }}
+      >
+        <div className="flex justify-between items-start mb-6">
+          <div>
+            <h3 className="text-gray-900 font-bold text-lg">Selling Chart</h3>
+            <p className="text-[#8F8F8F] text-xs mt-1">Daily selling rate by customer</p>
+          </div>
+        </div>
+
+        <div className="h-[250px] w-full relative mt-4">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={sellingData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+              <defs>
+                {customers.map((customer: string, index: number) => {
+                  const color = CHART_COLORS[index % CHART_COLORS.length];
+                  return (
+                    <linearGradient key={`color-${index}`} id={`color-${index}`} x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor={color} stopOpacity={0.1}/>
+                      <stop offset="95%" stopColor={color} stopOpacity={0}/>
+                    </linearGradient>
+                  );
+                })}
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+              <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 12 }} dy={10} />
+              <YAxis axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 12 }} ticks={[0, 10, 20, 30, 40, 50]} domain={[0, (dataMax: number) => Math.max(dataMax, 50)]} tickFormatter={(val) => val.toLocaleString()} />
+              <Tooltip
+                contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                formatter={(value: any, name: any) => [`${Number(value).toLocaleString()}`, name]}
+              />
+              <Legend verticalAlign="top" align="right" content={<CustomLegend />} />
+              {customers.map((customer: string, index: number) => {
+                const color = CHART_COLORS[index % CHART_COLORS.length];
+                return (
+                  <Area
+                    key={customer}
+                    name={customer}
+                    type="monotone"
+                    dataKey={customer}
+                    stroke={color}
+                    strokeWidth={2}
+                    fillOpacity={1}
+                    fill={`url(#color-${index})`}
+                  />
+                );
+              })}
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      {/* Revenue Chart */}
+      <div
+        className="rounded-2xl sm:rounded-3xl p-4 sm:p-6"
+        style={{
+          background: 'rgba(255,255,255,0.7)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+          border: '1px solid rgba(255,255,255,0.9)',
+          boxShadow: '0 8px 40px rgba(0,0,0,0.06)',
+        }}
+      >
+        <div className="mb-6">
+          <h3 className="text-gray-900 font-bold text-lg">Revenue by Customer</h3>
+          <p className="text-[#8F8F8F] text-xs mt-1">Daily revenue breakdown</p>
+        </div>
+
+        <div className="h-[250px] w-full mt-4">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={revenueData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }} barSize={32}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+              <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 12 }} dy={10} />
+              <YAxis axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 12 }} ticks={[0, 10, 20, 30, 40, 50]} domain={[0, (dataMax: number) => Math.max(dataMax, 50)]} tickFormatter={(val) => val.toLocaleString()} />
+              <Tooltip
+                cursor={{ fill: '#f3f4f6' }}
+                contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                formatter={(value: any) => [`${Number(value).toLocaleString()}`, 'Revenue']}
+              />
+              <Bar dataKey="value" fill="#92487A" radius={[4, 4, 4, 4]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+    </div>
+  );
+};

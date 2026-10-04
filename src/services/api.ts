@@ -31,6 +31,9 @@ export interface CustomerRequestDTO {
   contact02?: string;
   qty: string;
   remark: string;
+  date?: string;
+  deliveryDate?: string;
+  delivery_date?: string;
   totalPrice: number;
   items: OrderItem[];
 }
@@ -71,6 +74,11 @@ export interface OrderDetailsDto {
   total: number;
   productId: number;
   orderId?: number;
+}
+
+export interface ProductQtyDto {
+  totalQty: number;
+  productName: string;
 }
 
 // API service functions
@@ -212,6 +220,36 @@ export interface User {
  * Returns a Blob (Excel file)
  */
 export const dashboardApi = {
+  getStats: async (): Promise<Record<string, number>> => {
+    try {
+      const response = await api.get<Record<string, number>>('/dashboard');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching dashboard stats:', error);
+      throw error;
+    }
+  },
+
+  getChartData: async (): Promise<any> => {
+    try {
+      const response = await api.get<any>('/dashboard/weekly_orders');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching dashboard chart data:', error);
+      throw error;
+    }
+  },
+
+  getDailyOrdersChartData: async (date: string): Promise<any> => {
+    try {
+      const response = await api.get<any>(`/dashboard/daily_orders/${date}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching dashboard daily chart data:', error);
+      throw error;
+    }
+  },
+
   exportSalesExcel: async (productName: string): Promise<Blob> => {
     try {
       const encodedName = encodeURIComponent(productName);
@@ -221,6 +259,41 @@ export const dashboardApi = {
       return response.data;
     } catch (error) {
       console.error('Error exporting sales as Excel:', error);
+      throw error;
+    }
+  },
+};
+
+export const dashboardApiReturnData = {
+  exportSalesExcel: async (productName: string): Promise<Blob> => {
+    try {
+      const encodedName = encodeURIComponent(productName);
+      const response = await api.get<Blob>(`/dashboard/exportData/${encodedName}`, {
+        responseType: 'blob',
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error exporting sales as Excel:', error);
+      throw error;
+    }
+  },
+
+  conformExport: async (serialNumbers: string[]): Promise<string> => {
+    try {
+      const response = await api.put<string>('/dashboard/conform', serialNumbers);
+      return response.data;
+    } catch (error) {
+      console.error('Error confirming export:', error);
+      throw error;
+    }
+  },
+
+  getOrderQtySummary: async (): Promise<ProductQtyDto[]> => {
+    try {
+      const response = await api.get<ProductQtyDto[]>('/dashboard/exportDataQty');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching order quantity summary:', error);
       throw error;
     }
   },

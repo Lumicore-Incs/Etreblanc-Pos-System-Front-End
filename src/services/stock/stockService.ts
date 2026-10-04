@@ -3,10 +3,20 @@ import { StockItem } from '../../components/stock/StockForm';
 
 export const getAllStock = async (): Promise<StockItem[]> => {
   try {
-    const response = await axios.get<StockItem[]>('/stockes');
+    const response = await axios.get<StockItem[]>('/stockes/details');
     return response.data;
   } catch (error) {
     console.error('Error fetching stock data:', error);
+    throw error;
+  }
+};
+
+export const getStockQty = async (): Promise<any> => {
+  try {
+    const response = await axios.get('/stockes/stockQty');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching stock quantity data:', error);
     throw error;
   }
 };

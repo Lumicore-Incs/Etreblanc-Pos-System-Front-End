@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { AlertSnackbar } from '../components/AlertSnackbar';
 import { BackgroundIcons } from '../components/BackgroundIcons';
@@ -25,7 +25,6 @@ export const SalesManagement: React.FC = () => {
   const [currentSale, setCurrentSale] = useState<Sale | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [isExporting, setIsExporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [user, setUser] = useState<{ role: string } | null>(null);
   const [snackbar, setSnackbar] = useState<{
@@ -34,11 +33,34 @@ export const SalesManagement: React.FC = () => {
     type: 'success' | 'error';
   }>({ open: false, message: '', type: 'error' });
   const [showExportPopup, setShowExportPopup] = useState(false);
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
+    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    searchTimerRef.current = setTimeout(() => {
+      setDebouncedSearch(value);
+      setPage(0);
+    }, 400);
+  };
 
   // Load existing orders from backend on component mount
   useEffect(() => {
     loadOrders();
   }, []);
+
+  // Reload orders when page, pageSize, or search changes
+  useEffect(() => {
+    if (page >= 0) {
+      loadOrders();
+    }
+  }, [page, pageSize, debouncedSearch]);
 
   // Load user data for role-based permissions
   useEffect(() => {
@@ -59,19 +81,25 @@ export const SalesManagement: React.FC = () => {
     setIsLoading(true);
     setError(null);
     try {
-      // Load all orders from backend via orderService
-      console.log('Calling orderService.getAllCustomerOrders()...');
-      const responseOrder = await orderService.getAllCustomerOrders();
+      // Load orders using pagination from orderService with search filter
+      console.log(
+        `Calling orderService.getAllCustomerOrdersPaginated(page=${page}, size=${pageSize}, search=${debouncedSearch})...`,
+      );
+      const result = await orderService.getAllCustomerOrdersPaginated(page, pageSize, {
+        search: debouncedSearch,
+      });
 
-      // Check if response exists and is an array
-      if (!responseOrder || !Array.isArray(responseOrder)) {
-        console.error('Invalid response format:', responseOrder);
+      // Check if response exists
+      if (!result) {
+        console.error('Invalid response format:', result);
         throw new Error('Invalid data format received from server');
       }
 
-      console.log('Number of orders received:', responseOrder.length);
+      // Update pagination state
+      setTotal(result.total);
+      setTotalPages(result.totalPages);
 
-      const canonicalSales = responseOrder as Sale[];
+      const canonicalSales = result.data as Sale[];
       setSales(canonicalSales);
     } catch (error: any) {
       console.error('Error loading orders:', error);
@@ -99,6 +127,8 @@ export const SalesManagement: React.FC = () => {
   };
 
   const addSale = () => {
+    // Reset to first page when adding a new sale
+    setPage(0);
     loadOrders();
   };
 
@@ -147,7 +177,6 @@ export const SalesManagement: React.FC = () => {
   };
 
   const exportSales = async (exportType: string) => {
-    setIsExporting(true);
     setError(null);
     try {
       let endpoint = '';
@@ -181,7 +210,6 @@ export const SalesManagement: React.FC = () => {
       setError(errorMessage);
       setSnackbar({ open: true, message: errorMessage, type: 'error' });
     } finally {
-      setIsExporting(false);
       setShowExportPopup(false);
     }
   };
@@ -201,8 +229,8 @@ export const SalesManagement: React.FC = () => {
   }
 
   return (
-<div
-  className="
+    <div
+      className="
     w-full
     max-w-full
     sm:max-w-full
@@ -215,8 +243,8 @@ export const SalesManagement: React.FC = () => {
     relative
     overflow-x-hidden
   "
-> 
-     <BackgroundIcons type="sales" />
+    >
+      <BackgroundIcons type="sales" />
       <AlertSnackbar
         message={snackbar.message}
         type={snackbar.type}
@@ -266,33 +294,15 @@ export const SalesManagement: React.FC = () => {
           </div>
         </div>
       )}
-      <header className="mb-6 sm:mb-8">
+      <header className="mb-4 sm:mb-6 px-1">
         <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
           <div className="w-full sm:w-auto">
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">{salesTitle}</h1>
-            <p className="text-gray-600 mt-1 sm:mt-2 text-sm sm:text-base">Add, edit, and manage your sales entries</p>
-          </div>
-          <div className="flex flex-wrap gap-2 w-full sm:w-auto">
-            <button
-              onClick={refreshData}
-              disabled={isLoading}
-              className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-md text-white text-sm sm:text-base transition-colors ${
-                isLoading ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'
-              }`}
-            >
-              {isLoading ? 'Refreshing...' : 'Refresh'}
-            </button>
-            {user?.role === 'ADMIN' && (
-              <button
-                onClick={() => setShowExportPopup(true)}
-                disabled={isExporting}
-                className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-md text-white text-sm sm:text-base transition-colors ${
-                  isExporting ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
-                }`}
-              >
-                {isExporting ? 'Exporting...' : 'Export'}
-              </button>
-            )}
+            <h1 className="text-[28px] sm:text-[32px] font-bold text-[#115E59] font-['Plus_Jakarta_Sans',sans-serif] tracking-tight leading-tight">
+              {salesTitle}
+            </h1>
+            <p className="text-[#475569] mt-0.5 text-[13px] sm:text-[14px] font-medium font-['Inter',sans-serif]">
+              Create new custom order
+            </p>
           </div>
         </div>
       </header>
@@ -320,11 +330,26 @@ export const SalesManagement: React.FC = () => {
             isLoading={isLoading}
             userRole={user?.role}
             onRefresh={refreshData}
+            searchTerm={search}
+            onSearchChange={handleSearchChange}
             onStatusChange={async (saleId, newStatus) => {
-              const sale = sales.find(s => s.id === saleId);
+              const sale = sales.find((s) => s.id === saleId);
               if (!sale) return;
               const updatedSale = { ...sale, status: newStatus };
               await updateSale(updatedSale);
+            }}
+            serverPagination={{
+              page,
+              pageSize,
+              total,
+              totalPages,
+              pageSizeOptions: [10, 20, 50],
+              onPrev: () => setPage((p) => Math.max(0, p - 1)),
+              onNext: () => setPage((p) => Math.min(totalPages - 1, p + 1)),
+              onPageSizeChange: (newSize) => {
+                setPageSize(newSize);
+                setPage(0);
+              },
             }}
           />
         </div>
