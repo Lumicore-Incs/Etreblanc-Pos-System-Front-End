@@ -6,6 +6,7 @@ interface Props {
   onEdit: (item: StockItem) => void;
   onDelete: (id: number) => void;
   filterType?: string;
+  filterMonth?: string;
   filterDate?: string;
   filterStatus?: string;
 }
@@ -23,14 +24,22 @@ const statusBadgeClass = (status: StockItem['status']) => {
   }
 };
 
-const StockTable: React.FC<Props> = ({ items, onEdit, onDelete, filterType, filterDate, filterStatus }) => {
+const StockTable: React.FC<Props> = ({ items, onEdit, onDelete, filterType, filterMonth, filterDate, filterStatus }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 5;
   const filteredItems = items.filter((item) => {
     const matchesType = !filterType || filterType === 'All' || item.type.toLowerCase() === filterType.toLowerCase();
-    const matchesDate = !filterDate || new Date(item.date).toISOString().split('T')[0] === filterDate;
+    
+    let matchesMonth = true;
+    if (filterMonth && filterMonth !== '') {
+      const itemMonth = new Date(item.date).getMonth() + 1; // 1-12
+      matchesMonth = itemMonth.toString() === filterMonth;
+    }
+
     const matchesStatus = !filterStatus || filterStatus === 'All' || item.status === filterStatus;
-    return matchesType && matchesDate && matchesStatus;
+    const matchesDate = !filterDate || new Date(item.date).toISOString().split('T')[0] === filterDate;
+    
+    return matchesType && matchesMonth && matchesDate && matchesStatus;
   });
   const totalPages = Math.ceil(filteredItems.length / rowsPerPage);
   const paginatedItems = filteredItems.slice(
@@ -56,9 +65,7 @@ const StockTable: React.FC<Props> = ({ items, onEdit, onDelete, filterType, filt
               <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Quantity
               </th>
-              <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Total Qty
-              </th>
+
               <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Status
               </th>
@@ -69,8 +76,8 @@ const StockTable: React.FC<Props> = ({ items, onEdit, onDelete, filterType, filt
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {paginatedItems.length > 0 ? (
-              paginatedItems.map((item) => (
-                <tr key={item.stock_id ?? JSON.stringify(item)} className="hover:bg-gray-50 transition">
+              paginatedItems.map((item, index) => (
+                <tr key={item.id ?? item.stock_id ?? `row-${currentPage}-${index}`} className="hover:bg-gray-50 transition">
                   <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                       {item.type}
@@ -82,9 +89,7 @@ const StockTable: React.FC<Props> = ({ items, onEdit, onDelete, filterType, filt
                   <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
                     <span className="text-sm font-medium text-gray-900">{item.quantity}</span>
                   </td>
-                  <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
-                    <span className="text-sm font-medium text-gray-900">{item.totalQuantity}</span>
-                  </td>
+
                   <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
                     <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${statusBadgeClass(item.status)}`}>
                       {item.status.split('_').map(word => word.charAt(0) + word.slice(1).toLowerCase()).join(' ')}
@@ -93,10 +98,10 @@ const StockTable: React.FC<Props> = ({ items, onEdit, onDelete, filterType, filt
                   <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm flex gap-2">
                     <button
                       onClick={() => onEdit(item)}
-                      disabled={item.quantity !== item.totalQuantity}
-                      title={item.quantity !== item.totalQuantity ? "Can't edit when quantities don't match" : ""}
+                      disabled={item.totalQuantity != null && item.quantity !== item.totalQuantity}
+                      title={item.totalQuantity != null && item.quantity !== item.totalQuantity ? "Can't edit when quantities don't match" : ""}
                       className={`inline-flex items-center px-2.5 py-1.5 border text-xs font-medium rounded focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-                        item.quantity !== item.totalQuantity 
+                        item.totalQuantity != null && item.quantity !== item.totalQuantity 
                           ? 'border-gray-200 text-gray-400 bg-gray-50 cursor-not-allowed'
                           : 'border-blue-100 text-blue-700 bg-blue-50 hover:bg-blue-100 focus:ring-blue-500'
                       }`}
@@ -104,11 +109,11 @@ const StockTable: React.FC<Props> = ({ items, onEdit, onDelete, filterType, filt
                       Edit
                     </button>
                     <button
-                      onClick={() => onDelete(item.stock_id || 0)}
-                      disabled={item.quantity !== item.totalQuantity}
-                      title={item.quantity !== item.totalQuantity ? "Can't delete when quantities don't match" : ""}
+                      onClick={() => onDelete(item.id || item.stock_id || 0)}
+                      disabled={item.totalQuantity != null && item.quantity !== item.totalQuantity}
+                      title={item.totalQuantity != null && item.quantity !== item.totalQuantity ? "Can't delete when quantities don't match" : ""}
                       className={`inline-flex items-center px-2.5 py-1.5 border text-xs font-medium rounded focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-                        item.quantity !== item.totalQuantity
+                        item.totalQuantity != null && item.quantity !== item.totalQuantity
                           ? 'border-gray-200 text-gray-400 bg-gray-50 cursor-not-allowed'
                           : 'border-red-100 text-red-700 bg-red-50 hover:bg-red-100 focus:ring-red-500'
                       }`}
@@ -120,7 +125,7 @@ const StockTable: React.FC<Props> = ({ items, onEdit, onDelete, filterType, filt
               ))
             ) : (
               <tr>
-                <td colSpan={6} className="px-4 sm:px-6 py-4 text-center text-gray-500">
+                <td colSpan={5} className="px-4 sm:px-6 py-4 text-center text-gray-500">
                   No records found
                 </td>
               </tr>
@@ -133,9 +138,9 @@ const StockTable: React.FC<Props> = ({ items, onEdit, onDelete, filterType, filt
       <div className="md:hidden">
         <div className="divide-y divide-gray-200">
           {paginatedItems.length > 0 ? (
-            paginatedItems.map((item) => (
+            paginatedItems.map((item, index) => (
               <div
-                key={item.stock_id ?? JSON.stringify(item)}
+                key={item.id ?? item.stock_id ?? `mobile-row-${currentPage}-${index}`}
                 className="p-4 space-y-3"
               >
                 <div className="flex items-center justify-between gap-2">
@@ -156,19 +161,16 @@ const StockTable: React.FC<Props> = ({ items, onEdit, onDelete, filterType, filt
                     <div className="text-gray-500 text-xs uppercase font-semibold">Quantity</div>
                     <div className="font-medium text-gray-900">{item.quantity}</div>
                   </div>
-                  <div>
-                    <div className="text-gray-500 text-xs uppercase font-semibold">Total Qty</div>
-                    <div className="font-medium text-gray-900">{item.totalQuantity}</div>
-                  </div>
+
                 </div>
 
                 <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
                   <button
                     onClick={() => onEdit(item)}
-                    disabled={item.quantity !== item.totalQuantity}
-                    title={item.quantity !== item.totalQuantity ? "Can't edit when quantities don't match" : ""}
+                    disabled={item.totalQuantity != null && item.quantity !== item.totalQuantity}
+                    title={item.totalQuantity != null && item.quantity !== item.totalQuantity ? "Can't edit when quantities don't match" : ""}
                     className={`inline-flex items-center px-3 py-2 border text-xs font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-                      item.quantity !== item.totalQuantity
+                      item.totalQuantity != null && item.quantity !== item.totalQuantity
                         ? 'border-gray-200 text-gray-400 bg-gray-50 cursor-not-allowed'
                         : 'border-blue-100 text-blue-700 bg-blue-50 hover:bg-blue-100 focus:ring-blue-500'
                     }`}
@@ -176,11 +178,11 @@ const StockTable: React.FC<Props> = ({ items, onEdit, onDelete, filterType, filt
                     Edit
                   </button>
                   <button
-                    onClick={() => onDelete(item.stock_id || 0)}
-                    disabled={item.quantity !== item.totalQuantity}
-                    title={item.quantity !== item.totalQuantity ? "Can't delete when quantities don't match" : ""}
+                    onClick={() => onDelete(item.id || item.stock_id || 0)}
+                    disabled={item.totalQuantity != null && item.quantity !== item.totalQuantity}
+                    title={item.totalQuantity != null && item.quantity !== item.totalQuantity ? "Can't delete when quantities don't match" : ""}
                     className={`inline-flex items-center px-3 py-2 border text-xs font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-                      item.quantity !== item.totalQuantity
+                      item.totalQuantity != null && item.quantity !== item.totalQuantity
                         ? 'border-gray-200 text-gray-400 bg-gray-50 cursor-not-allowed'
                         : 'border-red-100 text-red-700 bg-red-50 hover:bg-red-100 focus:ring-red-500'
                     }`}

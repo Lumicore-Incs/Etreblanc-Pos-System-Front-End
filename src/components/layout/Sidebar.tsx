@@ -1,58 +1,124 @@
 import {
-  HomeIcon,
-  LogOutIcon,
-  ProportionsIcon,
-  ScaleIcon,
-  SettingsIcon,
-  StoreIcon,
+  ChevronDownIcon,
+  LayoutDashboardIcon,
   UsersIcon,
+  XIcon,
+  Copy,
+  FileUp,
+  MapPin,
+  Package,
+  Layers,
+  Settings,
+  BarChart3,
+  PanelLeftClose
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { getCurrentUser } from '../../service/auth';
-import { logout } from '../../services/authUtils';
 
-const getNavItems = (userRole: string) => {
-  // Normalize role string for comparison
+interface NavItem {
+  icon?: any;
+  label: string;
+  to?: string;
+  isSettings?: boolean;
+  children?: NavItem[];
+  end?: boolean;
+}
+
+// 🔹 Navigation Items
+const getNavItems = (userRole: string): NavItem[] => {
   const normalized = (userRole || '').toUpperCase();
 
-  // Check for specific roles
-  const isSuperUser = 
-    normalized === 'SUPER USER' || 
-    normalized === 'SUPER_USER' || 
+  const isSuperUser =
+    normalized === 'SUPER USER' ||
+    normalized === 'SUPER_USER' ||
+    normalized === 'SUPERUSER';
+
+  const isAdmin = normalized === 'ADMIN';
+  const isUser = normalized === 'USER';
+
+  const items: NavItem[] = [];
+
+  // DASHBOARD - All roles
+  items.push({ icon: LayoutDashboardIcon, label: 'Dashboard', to: '/', end: true });
+
+  // USER Specific items
+  if (isUser) {
+    items.push({ icon: FileUp, label: 'Add New Order', to: '/sale', end: true });
+  }
+
+  // SUPER USER Specific items
+  if (isSuperUser) {
+    items.push({ icon: FileUp, label: 'Export orders', to: '/export-orders' });
+    items.push({ icon: MapPin, label: 'Tracking Id', to: '/tracking-id' });
+  }
+
+  // PRODUCT - Super User only
+  if (isSuperUser) {
+    items.push({ icon: Package, label: 'Product', to: '/product' });
+  }
+
+  // USERS category - Super User and Admin
+  if (isSuperUser || isAdmin) {
+    items.push({
+      icon: UsersIcon,
+      label: 'user operation',
+      children: [
+        { label: 'User List', to: '/users' },
+        { label: 'salary increment', to: '/user-orders' },
+      ],
+    });
+  }
+
+  // STOCK - Super User and Admin
+  if (isSuperUser || isAdmin) {
+    items.push({ icon: Layers, label: 'Stock', to: '/stock' });
+  }
+
+  // MY ORDER - Super User and Admin (User already added above)
+  if (isSuperUser || isAdmin) {
+    items.push({
+      icon: Copy,
+      label: 'My Order',
+      children: [
+        { label: 'Duplicate Orders', to: '/sale/duplicate' },
+        { label: 'orders operation', to: '/my-orders' },
+      ],
+    });
+  }
+
+  return items;
+};
+
+// 🔹 Help & Settings
+const getHelpSettingsItems = (userRole: string): NavItem[] => {
+  const normalized = (userRole || '').toUpperCase();
+
+  const isSuperUser =
+    normalized === 'SUPER USER' ||
+    normalized === 'SUPER_USER' ||
     normalized === 'SUPERUSER';
   const isAdmin = normalized === 'ADMIN';
 
-  // Admin menu items
-  const adminBaseItems = [
-    { icon: HomeIcon, label: 'Dashboard', to: '/' },
-    { icon: ProportionsIcon, label: 'Product', to: '/product' },
-    { icon: UsersIcon, label: 'Users', to: '/users' },
-    { icon: StoreIcon, label: 'Stock', to: '/stock' },
-    { icon: SettingsIcon, label: 'Settings', to: '/sale/settings', isSettings: true },
-  ];
+  const items: NavItem[] = [];
 
-  // Add Duplicate Orders only for SUPER USER
-  const adminItems = isSuperUser ? [
-    { icon: HomeIcon, label: 'Dashboard', to: '/' },
-    { icon: ScaleIcon, label: 'Duplicate Orders', to: '/sale/duplicate' },
-    { icon: ProportionsIcon, label: 'Product', to: '/product' },
-    { icon: UsersIcon, label: 'Users', to: '/users' },
-    { icon: StoreIcon, label: 'Stock', to: '/stock' },
-    { icon: SettingsIcon, label: 'Settings', to: '/sale/settings', isSettings: true },
-  ] : adminBaseItems;
+  // SETTINGS - All roles
+  items.push({ icon: Settings, label: 'Settings', to: '/sale/settings', isSettings: true });
 
-  // Regular users keep the existing, broader set
-  const userItems = [
-    { icon: HomeIcon, label: 'Dashboard', to: '/' },
-    { icon: ScaleIcon, label: 'Add New Order', to: '/sale' },
-    { icon: ScaleIcon, label: 'Duplicate Orders', to: '/sale/duplicate' },
-    { icon: ScaleIcon, label: 'Tracking ID', to: '/tracking-id' },
-    { icon: SettingsIcon, label: 'Settings', to: '/sale/settings', isSettings: true },
-  ];
+  // REPORTS - Super User and Admin
+  if (isSuperUser || isAdmin) {
+    items.push({
+      icon: BarChart3,
+      label: 'Reports',
+      children: [
+        { label: 'Monthly Sale Summery', to: '/monthly-report' },
+        { label: 'Monthly Delevery Summery', to: '/sales-summary' },
+        { label: 'Daily Report', to: '/daily-report' },
+      ],
+    });
+  }
 
-  // Return admin menu if admin/superuser, otherwise return user menu
-  return (isAdmin || isSuperUser) ? adminItems : userItems;
+  return items;
 };
 
 interface SidebarProps {
@@ -69,118 +135,203 @@ export const Sidebar: React.FC<SidebarProps> = ({
   setShowSettings,
 }) => {
   const [user, setUser] = useState<{ role: string } | null>(null);
-  const [userLoading, setUserLoading] = useState(true);
+  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
+
+  const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchUser = async () => {
       try {
         const userData = await getCurrentUser();
         setUser(userData);
-      } catch (err) {
-        console.error('Failed to fetch user data:', err);
+      } catch {
         setUser(null);
-      } finally {
-        setUserLoading(false);
       }
     };
 
     fetchUser();
   }, []);
 
+  // 🔹 Auto expand active menu
+  useEffect(() => {
+    const items = [...getNavItems(user?.role || ''), ...getHelpSettingsItems(user?.role || '')];
+    const expanded = new Set<string>();
+
+    const check = (item: NavItem, parent?: string) => {
+      if (item.to && location.pathname === item.to && parent) {
+        expanded.add(parent);
+      }
+      item.children?.forEach((c) => check(c, item.label));
+    };
+
+    items.forEach((i) => check(i));
+    setExpandedItems(expanded);
+  }, [location.pathname, user]);
+
+  const toggleExpand = (label: string) => {
+    const newSet = new Set(expandedItems);
+    newSet.has(label) ? newSet.delete(label) : newSet.add(label);
+    setExpandedItems(newSet);
+  };
+
   const handleSettingsClick = (e: React.MouseEvent) => {
     e.preventDefault();
     setShowSettings?.(!showSettings);
   };
 
-  const renderNavItem = (item: any) => {
+  // 🔹 Render Items
+  const renderNavItem = (item: NavItem) => {
     if (item.isSettings) {
       return (
         <button
           key={item.to}
           onClick={handleSettingsClick}
-          className={`
-            w-full flex items-center px-6 py-3 text-gray-700 transition-all duration-300
-            hover:bg-white hover:bg-opacity-50
-            ${showSettings ? 'bg-white bg-opacity-50 text-blue-600' : ''}
-          `}
+          className="w-full flex items-center px-4 py-2.5 mx-4 my-0.5 rounded-xl text-[#0B818D] hover:bg-[#0B818D]/10 hover:text-[#0B818D] transition text-left"
         >
-          <item.icon size={20} className="mr-3" />
-          <span>{item.label}</span>
+          <item.icon size={18} className="mr-3" />
+          <span className="text-[14px] font-medium">{item.label}</span>
         </button>
+      );
+    }
+
+    if (item.children) {
+      const isExpanded = expandedItems.has(item.label);
+      const isChildActive = item.children.some(child => location.pathname === child.to);
+
+      return (
+        <div key={item.label} className="w-full">
+          <button
+            onClick={() => toggleExpand(item.label)}
+            className={`w-full flex items-center justify-between px-4 py-2.5 mx-4 my-0.5 rounded-xl transition text-left ${
+              isChildActive && !isExpanded
+                ? 'bg-[#0B818D] text-white shadow-sm'
+                : 'text-[#0B818D] hover:bg-[#0B818D]/10'
+            }`}
+            style={{ width: 'calc(100% - 32px)' }}
+          >
+            <div className="flex items-center">
+              <item.icon size={18} className="mr-3" />
+              <span className="text-[14px] font-medium">{item.label}</span>
+            </div>
+            <ChevronDownIcon
+              size={16}
+              className={`transition ${isExpanded ? 'rotate-180' : ''}`}
+            />
+          </button>
+
+          {isExpanded && (
+            <div className="mt-1 space-y-1 mx-4" style={{ width: 'calc(100% - 32px)' }}>
+              {item.children.map((child) => (
+                <NavLink
+                  key={child.to}
+                  to={child.to || '#'}
+                  onClick={onClose}
+                  className={({ isActive }) =>
+                    `block px-4 py-2 pl-11 text-[14px] font-medium rounded-xl transition ${
+                      isActive
+                        ? 'bg-[#0B818D] text-white shadow-sm'
+                        : 'text-[#0B818D] hover:bg-[#0B818D]/15'
+                    }`
+                  }
+                  style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: '13px', fontWeight: 400, lineHeight: '16px' }}
+                >
+                  {child.label}
+                </NavLink>
+              ))}
+            </div>
+          )}
+        </div>
       );
     }
 
     return (
       <NavLink
         key={item.to}
-        to={item.to}
-        end={item.to === '/'}
-        onClick={() => onClose()}
-        className={({ isActive }) => `
-          flex items-center px-6 py-3 text-gray-700 transition-all duration-300
-          hover:bg-white hover:bg-opacity-50
-          ${isActive ? 'bg-white bg-opacity-50 text-blue-600' : ''}
-        `}
+        to={item.to || '#'}
+        onClick={onClose}
+        end={item.end}
+        className={({ isActive }) =>
+          `flex items-center px-4 py-2.5 mx-4 my-0.5 rounded-xl font-medium transition ${
+            isActive
+              ? 'bg-[#0B818D] text-white shadow-sm'
+              : 'text-[#0B818D] hover:bg-[#0B818D]/10 hover:text-[#0B818D]'
+          }`
+        }
+        style={{ width: 'calc(100% - 32px)' }}
       >
-        <item.icon size={20} className="mr-3" />
-        <span>{item.label}</span>
+        <item.icon size={18} className="mr-3" />
+        <span className="text-[14px]">{item.label}</span>
       </NavLink>
     );
   };
 
   return (
     <>
-      {/* Overlay for mobile */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-20 md:hidden"
+          className="fixed inset-0 bg-black/40 z-20 md:hidden"
           onClick={onClose}
-        ></div>
+        />
       )}
 
       <aside
-        className={`
-          fixed md:static left-0 top-0 z-30
-          md:w-64 md:bg-opacity-70 bg-white
-          backdrop-filter backdrop-blur-lg 
-          border-r border-gray-200 transform transition-transform duration-300 ease-in-out
-          ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
-        `}
-        style={{ height: '100vh' }}
+        className={`fixed md:static z-30 w-64 border-r transition overflow-x-hidden bg-black md:bg-transparent ${
+          isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+        } flex flex-col`}
+        style={{
+          height: '100vh',
+          fontFamily: "'Plus Jakarta Sans', sans-serif",
+          borderColor: '#FFFFFF',
+        }}
       >
-        <div className="p-6 flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-gray-800">
-            {userLoading ? 'Loading...' : user ? user.role.toUpperCase() : 'USER'}
-          </h1>
-          <button
-            onClick={onClose}
-            className="md:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors"
-          >
-            <svg
-              className="w-6 h-6 text-gray-600"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
+        {/* 🔹 Header */}
+        <div className="flex items-center justify-between px-5 pt-8 mb-6 gap-2">
+          <div className="w-[160px] flex-shrink-0">
+            <img
+              src={new URL('../../assets/Logo2.png', import.meta.url).href}
+              className="w-full h-auto object-contain"
+              alt="Logo"
+            />
+          </div>
+
+          <div className="flex items-center">
+            <button
+              onClick={onClose}
+              className="p-1.5 text-[#0B818D] hover:opacity-80 transition md:hidden"
+              title="Close Menu"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </button>
+              <XIcon size={18} />
+            </button>
+            <button
+              onClick={() => {
+                localStorage.removeItem('token');
+                navigate('/auth');
+              }}
+              className="p-1.5 text-[#0B818D] hover:opacity-80 transition"
+              title="Logout"
+            >
+              <PanelLeftClose size={18} />
+            </button>
+          </div>
         </div>
-        <nav className="mt-6">
-          {getNavItems(user?.role || 'USER').map(renderNavItem)}
-          <button
-            className="w-full flex items-center px-6 py-3 text-gray-700 transition-all duration-300 hover:bg-white hover:bg-opacity-50"
-            onClick={logout}
-          >
-            <LogOutIcon size={20} className="mr-3" />
-            <span>Logout</span>
-          </button>
-        </nav>
+
+        {/* 🔹 Content */}
+        <div className="flex-1 overflow-y-auto overflow-x-hidden space-y-6 pb-6 scrollbar-hide">
+          <div>
+            <p className="px-8 pb-2 text-[12px] font-semibold uppercase tracking-wider text-[#0B818D]/60 font-['Inter']">Main menu</p>
+            <div className="space-y-0.5">
+              {getNavItems(user?.role || '').map(renderNavItem)}
+            </div>
+          </div>
+
+          <div>
+            <p className="px-8 pb-2 text-[12px] font-semibold uppercase tracking-wider text-[#0B818D]/60 font-['Inter']">Help & Settings</p>
+            <div className="space-y-0.5">
+              {getHelpSettingsItems(user?.role || '').map(renderNavItem)}
+            </div>
+          </div>
+        </div>
       </aside>
     </>
   );

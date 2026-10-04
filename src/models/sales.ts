@@ -15,6 +15,7 @@ export interface SaleItem {
 export interface Sale {
   id: string;
   customerId?: string;
+  waybillId?: string;
   name: string;
   customerName: string;
   address: string;
@@ -24,6 +25,7 @@ export interface Sale {
   // total item count on the sale
   qty: number;
   remark?: string;
+  deliveryDate?: string;
   items: SaleItem[];
   // canonical sale total
   totalPrice: number;
