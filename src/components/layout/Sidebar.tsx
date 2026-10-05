@@ -289,7 +289,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <div className="flex items-center justify-between px-5 pt-8 mb-6 gap-2">
           <div className="w-[160px] flex-shrink-0">
             <img
-              src={new URL('../../assets/Logo2.png', import.meta.url).href}
+              src={new URL('../../assets/logo2.png', import.meta.url).href}
               className="w-full h-auto object-contain"
               alt="Logo"
             />
