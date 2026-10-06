@@ -83,6 +83,7 @@ const getNavItems = (userRole: string): NavItem[] => {
       children: [
         { label: 'Duplicate Orders', to: '/sale/duplicate' },
         { label: 'orders operation', to: '/my-orders' },
+        { label: 'old oders', to: '/old-orders' },
       ],
     });
   }

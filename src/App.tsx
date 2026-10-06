@@ -19,6 +19,7 @@ import { Reports } from './pages/Reports';
 import { SalesSummary } from './pages/SalesSummary';
 import { MonthlyReport } from './pages/MonthlyReport';
 import { MyOrders } from './pages/MyOrders';
+import { OldOrders } from './pages/OldOrders';
 import { getToken } from './services/authUtils';
 
 // Simple loader component
@@ -125,6 +126,7 @@ export function App() {
             <Route path="sale" element={<SalesManagement />} />
             <Route path="sale/duplicate" element={<DuplicateSales />} />
             <Route path="my-orders" element={<MyOrders />} />
+            <Route path="old-orders" element={<OldOrders />} />
             <Route path="sale/settings" element={<SalesManagement />} />
             <Route path="export-orders" element={<ExportOrder />} />
             <Route path="product" element={<ProductManagement />} />
