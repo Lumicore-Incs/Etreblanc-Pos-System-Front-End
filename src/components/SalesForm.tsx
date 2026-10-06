@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Sale, SaleItem } from '../models/sales';
 import { customerApi, CustomerRequestDTO, productApi, ProductDto, CustomerDtoGet } from '../services/api';
+import { orderService } from '../services/orders/orderService';
 import { AlertSnackbar } from './AlertSnackbar';
 
 interface SalesFormProps {
@@ -149,6 +150,37 @@ export const SalesForm: React.FC<SalesFormProps> = ({
       }
     }
   }, [currentSale, isEditing]);
+
+  // Check past orders alert
+  useEffect(() => {
+    // Only check if we are NOT editing an existing order
+    if (isEditing) return;
+
+    const checkPastOrders = async (contact: string) => {
+      try {
+        const result = await orderService.getAllCustomerOrdersPaginated(0, 1, { search: contact });
+        if (result && result.total >= 10) {
+          setSnackbar({
+            open: true,
+            message: `🎉 Loyal Customer Alert: This customer has already placed ${result.total} orders!`,
+            type: 'success',
+          });
+        }
+      } catch (error) {
+        // silently ignore
+      }
+    };
+
+    const contactToSearch = (formData.contact01 && formData.contact01.length === 10) ? formData.contact01 
+                          : (formData.contact02 && formData.contact02.length === 10 ? formData.contact02 : null);
+
+    if (contactToSearch) {
+      const timer = setTimeout(() => {
+        checkPastOrders(contactToSearch);
+      }, 800);
+      return () => clearTimeout(timer);
+    }
+  }, [formData.contact01, formData.contact02, isEditing]);
 
   // Parse customer info from text area and fill the form
   const parseCustomerInfoText = () => {
