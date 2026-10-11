@@ -581,8 +581,8 @@ export const Users = () => {
                     <th className="px-6 text-[16px] font-medium text-[#414141] font-['Inter']">Id</th>
                     <th className="px-6 text-[16px] font-medium text-[#414141] font-['Inter']">Name</th>
                     <th className="px-6 text-[16px] font-medium text-[#414141] font-['Inter']">Short Name</th>
-                    <th className="px-6 text-[16px] font-medium text-[#414141] font-['Inter']">Serial Prefix</th>
-                    <th className="px-6 text-[16px] font-medium text-[#414141] font-['Inter']">Price</th>
+                    <th className="px-6 text-[16px] font-medium text-[#414141] font-['Inter']">Email</th>
+                    <th className="px-6 text-[16px] font-medium text-[#414141] font-['Inter']">Role</th>
                     <th className="px-6 text-[16px] font-medium text-[#414141] font-['Inter']">Status</th>
                     <th className="px-6 text-[16px] font-medium text-[#414141] font-['Inter'] text-center">Actions</th>
                   </tr>
@@ -617,16 +617,16 @@ export const Users = () => {
                           </td>
                           <td className="px-6 text-[16px] font-medium text-[#414141] font-['Inter']">
                             {editingUser?.id === user.id ? (
-                              <input type="text" value={editingUser.serialPrefix || ''} onChange={(e) => setEditingUser({ ...editingUser, serialPrefix: e.target.value })} className="w-full px-2 py-1 border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-[#0B818D] text-[16px] font-medium text-[#414141] font-['Inter']" />
+                              <input type="email" value={editingUser.email || ''} onChange={(e) => setEditingUser({ ...editingUser, email: e.target.value })} className="w-full px-2 py-1 border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-[#0B818D] text-[16px] font-medium text-[#414141] font-['Inter']" />
                             ) : (
-                              user.serialPrefix || '-'
+                              user.email || '-'
                             )}
                           </td>
                           <td className="px-6">
                             {editingUser?.id === user.id ? (
-                              <input type="text" value={editPrice} onChange={(e) => setEditPrice(e.target.value)} className="w-full px-2 py-1 border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-[#0B818D] text-[16px] font-medium text-[#414141] font-['Inter']" />
+                              <select value={editingUser.role} onChange={(e) => setEditingUser({ ...editingUser, role: e.target.value })} className="w-full px-2 py-1 border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-[#0B818D] text-[16px] font-medium text-[#414141] font-['Inter']"><option value="USER">USER</option><option value="SUPER USER">SUPER USER</option><option value="ADMIN">ADMIN</option></select>
                             ) : (
-                              <span className="text-[16px] font-medium text-[#414141] font-['Inter']">{priceVal}</span>
+                              <span className="text-[16px] font-medium text-[#414141] font-['Inter']">{user.role || '-'}</span>
                             )}
                           </td>
                           <td className="px-6">
@@ -717,8 +717,8 @@ export const Users = () => {
                 <div className="space-y-2 mb-3">
                   {[
                     { label: 'Short Name', val: shortName, icon: <Package className="w-4 h-4 text-[#0B818D] flex-shrink-0" />, edit: isEditing ? <input type="text" className="flex-1 w-full min-w-0 px-2 py-0.5 border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-[#0B818D] text-sm" value={editShortName} onChange={(e) => setEditShortName(e.target.value)} /> : null },
-                    { label: 'Serial Prefix', val: user.serialPrefix || '—', icon: <Package className="w-4 h-4 text-[#0B818D] flex-shrink-0" />, edit: isEditing ? <input type="text" className="flex-1 w-full min-w-0 px-2 py-0.5 border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-[#0B818D] text-sm" value={editingUser!.serialPrefix || ''} onChange={(e) => setEditingUser({ ...editingUser!, serialPrefix: e.target.value })} /> : null },
-                    { label: 'Price', val: priceVal, icon: <Package className="w-4 h-4 text-[#0B818D] flex-shrink-0" />, edit: isEditing ? <input type="text" className="flex-1 w-full min-w-0 px-2 py-0.5 border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-[#0B818D] text-sm" value={editPrice} onChange={(e) => setEditPrice(e.target.value)} /> : null },
+                    { label: 'Email', val: user.email || '—', icon: <Package className="w-4 h-4 text-[#0B818D] flex-shrink-0" />, edit: isEditing ? <input type="email" className="flex-1 w-full min-w-0 px-2 py-0.5 border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-[#0B818D] text-sm" value={editingUser!.email || ''} onChange={(e) => setEditingUser({ ...editingUser!, email: e.target.value })} /> : null },
+                    { label: 'Role', val: user.role || '—', icon: <Shield className="w-4 h-4 text-[#0B818D] flex-shrink-0" />, edit: isEditing ? <select className="flex-1 w-full min-w-0 px-2 py-0.5 border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-[#0B818D] text-sm" value={editingUser!.role} onChange={(e) => setEditingUser({ ...editingUser!, role: e.target.value })}><option value="USER">USER</option><option value="SUPER USER">SUPER USER</option><option value="ADMIN">ADMIN</option></select> : null },
                   ].map(({ label, val, icon, edit }) => (
                     <div key={label} className="flex items-center gap-2 pb-1 border-b border-gray-50">
                       {icon}
@@ -726,14 +726,8 @@ export const Users = () => {
                       {edit || <span style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: '13px', color: '#414141' }}>{val}</span>}
                     </div>
                   ))}
-                  {isEditing && (
-                    <div className="flex items-center gap-2 pb-1 border-b border-gray-50">
-                      <Shield className="w-4 h-4 text-[#0B818D]" />
-                      <span style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: '11px', color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.05em', minWidth: 100 }}>Role</span>
-                      <select className="flex-1 px-2 py-0.5 border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-[#0B818D] text-sm" value={editingUser!.role} onChange={(e) => setEditingUser({ ...editingUser!, role: e.target.value })}><option value="USER">USER</option><option value="SUPER USER">SUPER USER</option></select>
-                    </div>
-                  )}
                 </div>
+
                 <div className="flex gap-4 pt-2 border-t border-gray-100 justify-end">
                   {isEditing
                     ? <>

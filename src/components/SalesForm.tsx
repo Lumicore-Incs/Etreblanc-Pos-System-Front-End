@@ -175,8 +175,11 @@ export const SalesForm: React.FC<SalesFormProps> = ({
                           : (formData.contact02 && formData.contact02.length === 10 ? formData.contact02 : null);
 
     if (contactToSearch) {
+      // Remove leading 0 for search since backend saves without leading 0
+      const searchVal = contactToSearch.startsWith('0') ? contactToSearch.substring(1) : contactToSearch;
+      
       const timer = setTimeout(() => {
-        checkPastOrders(contactToSearch);
+        checkPastOrders(searchVal);
       }, 800);
       return () => clearTimeout(timer);
     }
@@ -415,7 +418,32 @@ export const SalesForm: React.FC<SalesFormProps> = ({
   };
 
   // Load selected customer into form
-  /*  */
+  const handleSelectCustomer = (matched: CustomerDtoGet) => {
+    const ensureLeadingZero = (num?: string | null) => {
+      if (!num) return '';
+      return num.startsWith('0') ? num : '0' + num;
+    };
+    
+    setFormData((prev) => ({
+      ...prev,
+      name: matched.name || matched.customerName || prev.name,
+      customerName: matched.customerName || matched.name || prev.customerName,
+      address: matched.address || prev.address,
+      contact01: ensureLeadingZero(matched.contact01) || prev.contact01,
+      contact02: ensureLeadingZero(matched.contact02) || prev.contact02,
+      customerId: String(matched.customerId ?? '') || prev.customerId,
+    }));
+    
+    setSearchQuery('');
+    setSearchResults([]);
+    setShowSearchResults(false);
+    
+    setSnackbar({
+      open: true,
+      message: 'Customer details auto-filled successfully!',
+      type: 'success',
+    });
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -908,6 +936,24 @@ export const SalesForm: React.FC<SalesFormProps> = ({
                 className="p-2 w-full bg-transparent focus:outline-none text-[13px] text-gray-700 placeholder-gray-400 font-medium"
                 placeholder="Search existing customer by name, phone or WhatsApp..."
               />
+              {/* Dropdown for search results */}
+              {_showSearchResults && _searchResults.length > 0 && (
+                <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-[#BFF0EC] rounded-xl shadow-lg z-[100] max-h-60 overflow-y-auto">
+                  {_searchResults.map((customer) => (
+                    <div 
+                      key={customer.customerId}
+                      onClick={() => handleSelectCustomer(customer)}
+                      className="px-4 py-3 hover:bg-[#F0FDFA] cursor-pointer border-b last:border-b-0 border-gray-100 transition-colors"
+                    >
+                      <div className="font-semibold text-[#134E4A] text-[13px]">{customer.name}</div>
+                      <div className="text-[11px] text-gray-500 mt-0.5 flex gap-3">
+                        {customer.contact01 && <span>📞 {customer.contact01.startsWith('0') ? '' : '0'}{customer.contact01}</span>}
+                        {customer.contact02 && <span>📱 {customer.contact02.startsWith('0') ? '' : '0'}{customer.contact02}</span>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
             <button
               type="button"
