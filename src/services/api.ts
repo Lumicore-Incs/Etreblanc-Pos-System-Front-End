@@ -203,22 +203,24 @@ export const orderApi = {
     }
   },
 
-  importOrders: async (file: File): Promise<any> => {
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-      
-      const response = await api.post('/import/orders', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-      return response.data;
-    } catch (error) {
-      console.error('Error importing orders:', error);
-      throw error;
-    }
+ importOrders: async (file: File): Promise<any> => {
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await api.post('/import/orders', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+      timeout: 60000, // 60 seconds
+    });
+
+    return response.data;
+  } catch (error) {
+    console.error('Error importing orders:', error);
+    throw error;
   }
+}
 };
 
 // User type for frontend mapped from UserApiDto

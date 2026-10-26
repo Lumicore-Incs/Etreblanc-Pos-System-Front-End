@@ -155,7 +155,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
               className="w-9 h-9 rounded-full overflow-hidden border border-white shadow-sm flex items-center justify-center flex-shrink-0"
             >
               <img 
-                src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=100&h=100&q=80" 
+                src={new URL('/src/assets/Profile.png', import.meta.url).href}
                 alt="Profile"
                 className="w-full h-full object-cover"
               />

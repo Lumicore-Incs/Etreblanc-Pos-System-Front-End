@@ -13,9 +13,9 @@ const explicit = viteEnv.VITE_API_BASE_URL ?? '';
 const mode = viteEnv.MODE ?? 'development';
 
 const modeDefaults: Record<string, string> = {
-  production: 'https://api.weadits.com/demo-0.0.1-SNAPSHOT',
-  development: 'http://localhost:8080',
- // development: 'https://api.weadits.com/demo-0.0.1-SNAPSHOT'
+  production: 'https://entreblanc.weadits.com/api',
+  // development: 'http://localhost:8080',
+ development: 'https://entreblanc.weadits.com/api'
 };
 
 export const API_BASE_URL: string = (
