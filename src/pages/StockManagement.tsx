@@ -147,6 +147,17 @@ export const StockManagement = () => {
 
   const damageItems = items.filter((item) => item.status === 'DAMAGE');
   const totalDamaged = damageItems.reduce((sum, item) => sum + Math.abs(item.quantity), 0);
+  const damageSummaries = Object.values(
+    damageItems.reduce<Record<string, { type: string; quantity: number }>>((acc, item) => {
+      const type = item.type?.trim() || 'UNKNOWN';
+      const key = type.toUpperCase();
+      if (!acc[key]) {
+        acc[key] = { type, quantity: 0 };
+      }
+      acc[key].quantity += Math.abs(Number(item.quantity) || 0);
+      return acc;
+    }, {}),
+  );
 
   // Product summaries for top cards (Raw total excluding damage if computed from items)
   const computedSummaries = Object.entries(
@@ -266,10 +277,10 @@ export const StockManagement = () => {
               <div className="flex-1 hidden sm:block">
                 <h4 className="text-[18px] font-medium text-[#E44A5E] uppercase mb-2">PRODUCT DETAILS</h4>
                 <div className="max-h-[80px] overflow-y-auto space-y-1 scrollbar-hide">
-                  {damageItems.map((item, idx) => (
-                    <div key={item.id || item.stock_id || idx} className="flex justify-between items-center">
-                      <span className="text-[14px] font-medium text-[#414141] truncate mr-2">{item.type}</span>
-                      <span className="text-[14px] text-[#757B87]">Qty : {Math.abs(item.quantity)}</span>
+                  {damageSummaries.map(({ type, quantity }) => (
+                    <div key={type.toUpperCase()} className="flex justify-between items-center">
+                      <span className="text-[14px] font-medium text-[#414141] truncate mr-2">{type}</span>
+                      <span className="text-[14px] text-[#757B87]">Qty : {quantity}</span>
                     </div>
                   ))}
                 </div>
